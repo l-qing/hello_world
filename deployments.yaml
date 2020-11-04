@@ -1,0 +1,77 @@
+# 1. 创建k8s中的docker认证秘钥
+#   kubectl delete secrets -n default alauda-harbor-b-regcred
+#   kubectl create secret -n default docker-registry alauda-harbor-b-regcred \
+#     --docker-server="harbor-b.alauda.cn" \
+#     --docker-username="刘庆" \
+#     --docker-password="xxxxx" \
+#     --docker-email="qingliu@alauda.io"
+# 2. 创建服务
+#   kubectl apply -f deployments.yaml
+# 3. 查看结果
+#   kubectl exec -it -n default demo-858695cbc5-6clg7 -- wget -q -O - http://localhost/healthy
+
+---
+# https://kubernetes.io/zh/docs/concepts/services-networking/service/
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-service
+  namespace: default
+  labels:
+    app: demo-service
+spec:
+  type: ClusterIP
+  selector:
+    app: demo
+  ports:
+    - name: demo-http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: demo
+    language: golang
+  name: demo
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+        language: golang
+    spec:
+      hostname: demo-hostname
+
+      imagePullSecrets:
+        - name: alauda-harbor-b-regcred
+
+      containers:
+      - name: demo
+        image: harbor-b.alauda.cn/devops/liuqing/hello_world:latest
+        imagePullPolicy: Always
+        ports:
+        - name: demo-http
+          containerPort: 80
+        # 就绪探测器
+        readinessProbe:
+          httpGet:
+            path: /healthy
+            port: demo-http
+          initialDelaySeconds: 3
+          periodSeconds: 10
+        # 存活探测器
+        livenessProbe:
+          httpGet:
+            path: /healthy
+            port: demo-http
+          initialDelaySeconds: 3
+          failureThreshold: 2
+          periodSeconds: 30
