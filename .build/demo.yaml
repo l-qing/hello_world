@@ -11,8 +11,6 @@ spec:
       taskRef:
         name: hello-world
         kind: ClusterTask
-      runAfter:
-        - gotest
       workspaces:
         - name: source
           workspace: source
