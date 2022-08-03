@@ -1,0 +1,16 @@
+apiVersion: builds.katanomi.dev/v1alpha1
+kind: Build
+spec:
+  workspaces:
+    - description: >
+        This workspace is shared among all the pipeline tasks to read/write
+        common resources
+      name: source
+  tasks:
+    - name: boilerplate
+      taskRef:
+        name: hello-world
+        kind: ClusterTask
+      workspaces:
+        - name: source
+          workspace: source
