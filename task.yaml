@@ -1,0 +1,51 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: task-with-parameters
+spec:
+  params:
+  - name: objectVal1
+    description: "description1"
+    type: object
+    properties:
+      key1:
+        type: string
+      image1:
+        type: string
+  - name: objectVal2
+    description: "description2"
+    type: object
+    properties:
+      key1:
+        type: string
+      image1:
+        type: string
+  steps:
+  - name: step1
+    image: $(params.objectVal1.image1)
+    script: |
+      echo $(params.objectVal1.key1)
+  - name: step2
+    image: $(params.objectVal2.image1)
+    script: |
+      echo $(params.objectVal2.key1)
+  - name: step3
+    image: bash:latest
+    script: |
+      #!/usr/bin/env bash
+      echo -n "{\"key1\": \"$(params.objectVal1.key1)\", \"image1\": \"$(params.objectVal1.image1)\"}" | tee $(results.resultObject1.path)
+      echo ""
+      echo -n '["a", "b"]' | tee $(results.resultArray.path)
+  results:
+  - name: resultObject1
+    description: "description3"
+    type: object
+    properties:
+      key1:
+        type: string
+      image1:
+        type: string
+  - name: resultArray
+    description: "description4"
+    type: array
+
